@@ -25,3 +25,6 @@ Flags:
     -p port                Use port instead of 8080
     -u user[:password]     Use user instead of admin:admin
  
+
+ If you like this please donate a few centi bitcoins at 19UNjJZ8QMZCNG9Tp3cofwbBxJeypTRchB
+ 
