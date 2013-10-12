@@ -28,7 +28,7 @@ Where command is one of:
   resources [type=XXX]  - Lists global JNDI resources
   status path           - returns -1 for not running, or if running, the number of sessions
   start path            - Starts the webapp on context path path
-  stop path             - Stops  the webapp on context path path
+  stop path             - Stops the webapp on context path path
   reload path           - Reloads the webapp on context path path
   deploy args           - Deploys a webapp, exampels of args is path=/foo war=file:/tmp/foo.war, see the link above
   undeploy path         - Undeploys the webapp at the given path
