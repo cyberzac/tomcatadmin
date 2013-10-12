@@ -20,7 +20,7 @@ usage() {
     cat <<EOF
 
 A wrapper around Tomcats manager webapp, see http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html#Supported_Manager_Commands 
-Usage $0 [-h --host] command [parameter...]
+Usage $0 [-h host] [-p port] [-u ser[:password]] command [parameter...]
 
 Where command is one of:
   list                  - List all webapps
@@ -37,7 +37,7 @@ Flags:
 
 -h host                Use host instead of localhost
 -p port                Use port instead of 8080
--u user[:password]     Use user insterad of admin:admin
+-u user[:password]     Use user instead of admin:admin
  
 EOF
 }
@@ -46,7 +46,6 @@ die() {
     echo $1
     exit 2
 }
-
 
 user=admin:admin
 host=localhost
