@@ -1,0 +1,150 @@
+#!/bin/bash
+#
+#    Copryright 2013 cyberzac Martin Zachrison, Kodmagi AB Sweden
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Lesser General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    at your option any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+usage() {
+    cat <<EOF
+
+A wrapper around Tomcats manager webapp, see http://tomcat.apache.org/tomcat-7.0-doc/manager-howto.html#Supported_Manager_Commands 
+Usage $0 [-h --host] command [parameter...]
+
+Where command is one of:
+  list                  - List all webapps
+  serverinfo            - Lists information about Tomcat, OS and the JVM
+  resources [type=XXX]  - Lists global JNDI resources
+  status path           - returns -1 for not running, or if running, the number of sessions
+  start path            - Starts the webapp on context path path
+  stop path             - Stops  the webapp on context path path
+  reload path           - Reloads the webapp on context path path
+  deploy args           - Deploys a webapp, exampels of args is path=/foo war=file:/tmp/foo.war, see the link above
+  undeploy path         - Undeploys the webapp at the given path
+
+Flags:
+
+-h host                Use host instead of localhost
+-p port                Use port instead of 8080
+-u user[:password]     Use user insterad of admin:admin
+ 
+EOF
+}
+
+die() {
+    echo $1
+    exit 2
+}
+
+
+user=admin:admin
+host=localhost
+port=8080
+manager=/manager/text/
+
+
+while getopts "h:p:u:" opt; do
+    case $opt in
+	h)
+	    host=$OPTARG
+	    ;;
+	p)
+	    port=$OPTARG
+	    ;;
+	u)
+	    user=$OPTARG
+	    ;;
+	*)
+	    usage
+	    
+    esac
+    
+done
+
+shift $(($OPTIND-1))
+
+
+if [ $# -lt 1 ]; then
+    usage
+    exit 2
+fi
+
+cmd=$1
+shift 1
+
+url=http://$host:$port$manager
+
+if [ $cmd != "list" -a $cmd != "serverinfo" -a $cmd != "resources" ]; then
+    if [ $# -eq 0 ]; then
+	die "Must give context path to webapp"
+    fi
+    path=$1
+fi
+
+curl="curl -s -u $user $url"
+
+case $cmd in
+    list|serverinfo)
+	${curl}$cmd
+	;;
+    resources)
+	if [ $# -eq 1 ]; then
+	    ${curl}$cmd?$*
+	else
+	    ${curl}$cmd
+        fi
+	;;
+    status)
+        status=$(${curl}list | grep "$path:" | awk -F: '{print $2}')
+	echo $status
+	if [ -z $status ]; then
+	    exit 2
+	fi
+	if [ $status == "running" ]; then
+	    exit 0
+	fi
+	exit 1
+
+	;;
+    start|stop|reload|undeploy)
+	result=$(${curl}$cmd?path=$path)
+	echo $result
+	if [[ $result == OK* ]] ; then
+	    exit 0;
+	fi
+	exit 1 
+	;;
+
+    deploy|redeploy)
+	if [ $# -lt 2 ]; then
+	    die "Must give path and file"
+	fi
+	path=$1
+	file=$2
+	if [ ! -r $file ]; then
+	    die "Can't read $file"
+	fi
+	if [ $cmd = "redeploy" ]; then
+	    redeploy="&update=true"
+        fi
+	${curl}deploy?path=$path$redeploy -T $file 
+	;;
+    *)
+	die "Unsupported command: $cmd"
+esac
+
+
+    
+    
+
